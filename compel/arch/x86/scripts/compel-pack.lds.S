@@ -20,8 +20,14 @@ SECTIONS
 
 	.rodata : {
 		*(.rodata*)
-		*(.got*)
 	}
+
+  .got : {
+. = ALIGN(8);
+__export_parasite_got = .;
+. = . + 8*100; /* 100 entries for GOT table */
+__export_parasite_got_end = .;
+  }
 
 	.toc : ALIGN(8) {
 		*(.toc*)

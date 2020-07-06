@@ -814,23 +814,26 @@ err_cure:
 	return -1;
 }
 
-void compel_relocs_apply(void *mem, void *vbase, size_t size, compel_reloc_t *elf_relocs, size_t nr_relocs)
+void compel_relocs_apply(void *mem, void *vbase, size_t size,
+			 compel_reloc_t *elf_relocs, size_t nr_relocs,
+			 unsigned long got_off)
 {
 	size_t i, j;
+	void **got = mem + got_off;
+
 #ifdef CONFIG_MIPS
 	compel_relocs_apply_mips(mem, vbase, elf_relocs, nr_relocs);
 #else
 	for (i = 0, j = 0; i < nr_relocs; i++) {
 		if (elf_relocs[i].type & COMPEL_TYPE_LONG) {
 			long *where = mem + elf_relocs[i].offset;
-			long *p = mem + size;
 
 			if (elf_relocs[i].type & COMPEL_TYPE_GOTPCREL) {
 				int *value = (int *)where;
 				int rel;
 
-				p[j] = (long)vbase + elf_relocs[i].value;
-				rel = (unsigned)((void *)&p[j] - (void *)mem) - elf_relocs[i].offset + elf_relocs[i].addend;
+				got[j] = vbase + elf_relocs[i].value;
+				rel = (unsigned)((void *)&got[j] - (void *)mem) - elf_relocs[i].offset + elf_relocs[i].addend;
 
 				*value = rel;
 				j++;
@@ -906,7 +909,8 @@ int compel_infect(struct parasite_ctl *ctl, unsigned long nr_threads, unsigned l
 	memcpy(ctl->local_map, ctl->pblob.hdr.mem, ctl->pblob.hdr.bsize);
 	if (ctl->pblob.hdr.nr_relocs)
 		compel_relocs_apply(ctl->local_map, ctl->remote_map, ctl->pblob.hdr.bsize,
-				    ctl->pblob.hdr.relocs, ctl->pblob.hdr.nr_relocs);
+				    ctl->pblob.hdr.relocs, ctl->pblob.hdr.nr_relocs,
+				    ctl->pblob.hdr.addr_got_off);
 
 	p = parasite_size;
 

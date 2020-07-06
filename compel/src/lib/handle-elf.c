@@ -16,6 +16,9 @@
 #include "piegen.h"
 #include "log.h"
 
+/* Adjust also in arch/x86/scripts/compel-pack.lds.S */
+#define GOT_SIZE 100
+
 #ifdef CONFIG_MIPS
 #include "ldsodefs.h"
 #endif
@@ -639,7 +642,11 @@ int __handle_elf(void *mem, size_t size)
 	}
 #endif /* !NO_RELOCS */
 	pr_out("};\n");
-	pr_out("static __maybe_unused size_t %s_nr_gotpcrel = %zd;\n", opts.prefix, nr_gotpcrel);
+
+	if (nr_gotpcrel > GOT_SIZE) {
+		pr_err("GOT table too big. Adjust GOT_SIZE\n");
+		goto err;
+	}
 
 	pr_out("static __maybe_unused const char %s_blob[] = {\n\t", opts.prefix);
 
@@ -684,7 +691,6 @@ int __handle_elf(void *mem, size_t size)
 	pr_out("\tpbd->hdr.mem		= %s_blob;\n", opts.prefix);
 	pr_out("\tpbd->hdr.bsize		= sizeof(%s_blob);\n",
 			opts.prefix);
-	pr_out("\tpbd->hdr.nr_gotpcrel	= %s_nr_gotpcrel;\n", opts.prefix);
 	pr_out("\tif (compel_mode_native(ctl))\n");
 	pr_out("\t\tpbd->hdr.parasite_ip_off	= "
 		"%s_sym__export_parasite_head_start;\n", opts.prefix);
@@ -697,6 +703,9 @@ int __handle_elf(void *mem, size_t size)
 			"%s_sym__export_parasite_cmd;\n", opts.prefix);
 	pr_out("\tpbd->hdr.addr_arg_off	= "
 			"%s_sym__export_parasite_args;\n", opts.prefix);
+	pr_out("\tpbd->hdr.addr_got_off	= "
+			"%s_sym__export_parasite_got;\n", opts.prefix);
+
 	pr_out("\tpbd->hdr.relocs		= %s_relocs;\n", opts.prefix);
 	pr_out("\tpbd->hdr.nr_relocs	= "
 			"sizeof(%s_relocs) / sizeof(%s_relocs[0]);\n",
