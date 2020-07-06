@@ -170,6 +170,8 @@ extern void compel_relocs_apply_mips(void *mem, void *vbase, compel_reloc_t *elf
 extern unsigned long compel_task_size(void);
 
 extern uint64_t compel_get_leader_sp(struct parasite_ctl *ctl);
+extern uint64_t compel_get_leader_ip(struct parasite_ctl *ctl);
 extern uint64_t compel_get_thread_sp(struct parasite_thread_ctl *tctl);
+extern uint64_t compel_get_thread_ip(struct parasite_thread_ctl *tctl);
 
 #endif

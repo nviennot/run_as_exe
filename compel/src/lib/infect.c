@@ -1608,7 +1608,17 @@ uint64_t compel_get_leader_sp(struct parasite_ctl *ctl)
 	return REG_SP(ctl->orig.regs);
 }
 
+uint64_t compel_get_leader_ip(struct parasite_ctl *ctl)
+{
+	return REG_IP(ctl->orig.regs);
+}
+
 uint64_t compel_get_thread_sp(struct parasite_thread_ctl *tctl)
 {
 	return REG_SP(tctl->th.regs);
+}
+
+uint64_t compel_get_thread_ip(struct parasite_thread_ctl *tctl)
+{
+	return REG_IP(tctl->th.regs);
 }
