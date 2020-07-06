@@ -1,0 +1,14 @@
+exe_link_with_ptrace
+*.o
+*.d
+compel/include/asm
+*.a
+*.so
+parasite.h
+compel/compel-host-bin
+include/common/asm
+
+musl-*.tar.gz
+musl/
+parasite.po
+run_as_exe
