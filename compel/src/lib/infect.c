@@ -1055,6 +1055,7 @@ out:
  */
 static int make_sock_for(int pid)
 {
+#if 0
 	int ret, mfd, fd, sk = -1;
 	char p[32];
 
@@ -1077,11 +1078,14 @@ static int make_sock_for(int pid)
 		pr_perror("Can't setup target netns");
 		goto out_cm;
 	}
+#endif
+	int sk = -1;
 
 	sk = socket(PF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
 	if (sk < 0)
 		pr_perror("Can't create seqsk");
 
+#if 0
 	ret = setns(mfd, CLONE_NEWNET);
 	if (ret) {
 		pr_perror("Can't restore former netns");
@@ -1094,6 +1098,7 @@ out_cm:
 out_c:
 	close(fd);
 out:
+#endif
 	return sk;
 }
 
