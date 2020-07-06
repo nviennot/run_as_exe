@@ -337,6 +337,13 @@ int __handle_elf(void *mem, size_t size)
 				pr_err("Unexpected undefined symbol: `%s'. External symbol in PIE?\n", name);
 				goto err;
 #endif
+			} else if (sym->st_shndx == SHN_COMMON) {
+				/*
+				 * We should allocate these variables somewhere,
+				 * perhaps similarly to the GOT table
+				 */
+				pr_err("Unsupported COM symbol: `%s'\n", name);
+				goto err;
 			}
 
 			if (sh->sh_type == SHT_REL) {
