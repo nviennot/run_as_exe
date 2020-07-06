@@ -32,7 +32,7 @@ export AFLAGS CFLAGS HOSTCFLAGS
 COMPEL		:= compel/compel-host
 COMPEL_BIN		:= compel/compel-host-bin
 
-all: $(COMPEL_BIN) musl/lib/libc.a
+all: run_as_exe
 
 include Makefile.compel
 
@@ -73,3 +73,31 @@ musl: $(MUSL_ARCHIVE)
 musl/lib/libc.a: musl
 	cd musl && env -u CFLAGS -u AFLAGS -u HOSTCFLAGS ./configure --disable-shared
 	env -u CFLAGS -u AFLAGS -u HOSTCFLAGS ${MAKE} -C musl
+
+# run_as_exe + parasite
+#
+
+CFLAGS_PARASITE += -Imusl/arch/x86_64 \
+	-Imusl/arch/generic \
+	-Imusl/obj/src/internal \
+	-Imusl/src/include \
+	-Imusl/src/internal \
+	-Imusl/obj/include \
+	-Imusl/include
+
+LDFLAGS_PARASITE += --exclude-libs ALL
+
+run_as_exe: run_as_exe.c parasite.h compel/libcompel.a | $(COMPEL_BIN)
+	$(CC) $(CFLAGS) $(shell $(COMPEL) includes) -o $@ $< $(shell $(COMPEL) --static libs)
+
+parasite.h: parasite.po
+	$(COMPEL) hgen -o $@ -f $<
+
+parasite.po: parasite.o musl/lib/libc.a | $(COMPEL_BIN)
+	ld $(LDFLAGS_PARASITE) $(shell $(COMPEL) ldflags) -o $@ $^ $(shell $(COMPEL) plugins)
+
+parasite.o: parasite.c | $(COMPEL_BIN) musl/ldso/dynlink.c
+	$(CC) $(CFLAGS_PARASITE) $(CFLAGS) -c $(shell $(COMPEL) cflags) -Wno-strict-prototypes -o $@ $^
+
+clean:
+	rm -f run_as_exe parasite.h parasite.po parasite.o
