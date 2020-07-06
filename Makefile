@@ -32,7 +32,7 @@ export AFLAGS CFLAGS HOSTCFLAGS
 COMPEL		:= compel/compel-host
 COMPEL_BIN		:= compel/compel-host-bin
 
-all: $(COMPEL_BIN)
+all: $(COMPEL_BIN) musl/lib/libc.a
 
 include Makefile.compel
 
@@ -52,3 +52,24 @@ compel/%: $(compel-deps) $(compel-plugins) .FORCE
 include/common/asm: include/common/arch/$(ARCH)/asm
 	$(call msg-gen, $@)
 	$(Q) ln -s ./arch/$(ARCH)/asm $@
+
+# musl libc
+#
+
+MUSL_VERSION ?= 1.2.0
+MUSL_ARCHIVE ?= musl-$(MUSL_VERSION).tar.gz
+
+$(MUSL_ARCHIVE):
+	wget https://www.musl-libc.org/releases/$@
+
+musl/ldso/dynlink.c: | musl/lib/libc.a;
+
+musl: $(MUSL_ARCHIVE)
+	rm -rf musl.tmp
+	mkdir musl.tmp
+	tar xzf $(MUSL_ARCHIVE) -C musl.tmp --strip-components=1
+	mv musl.tmp musl
+
+musl/lib/libc.a: musl
+	cd musl && env -u CFLAGS -u AFLAGS -u HOSTCFLAGS ./configure --disable-shared
+	env -u CFLAGS -u AFLAGS -u HOSTCFLAGS ${MAKE} -C musl
